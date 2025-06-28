@@ -55,7 +55,7 @@ def masking_tensor_chunks(tensor):
     Maskings = [M_1, M_2, M_3, M_4, M_5]
     return Maskings
 
-def Per_alpha(tensor, c, K):
+def Per_alpha(tensor, c, K, Maskings):
     # for Y of dimension (L x c) sweep over dimension c
         # for each c, define a set of 5 masking tensors
         # then for each M_i in this set:
@@ -65,7 +65,8 @@ def Per_alpha(tensor, c, K):
         # each item in max_results is the info for the NTD with the highest log like/AUC for each M
         
     print("doing c = {} with K ={}".format(c, K))
-    Maskings = masking_tensor_chunks(tensor) #village is directed. change to masking_tensor_undirected for undirected graph
+    if Maskings is None:
+        Maskings = masking_tensor_chunks(tensor) #village is directed. change to masking_tensor_undirected for undirected graph
     num_it = NUM_IT
     with parallel_backend('multiprocessing'):
         Big_Results = Parallel(n_jobs = 37)(delayed(Per_j)(j, Maskings, tensor, c, K, symm = False) for j in range(num_it))
@@ -83,7 +84,7 @@ def Per_alpha(tensor, c, K):
         max_results.append(Big_Results[max_idx][j])
     return max_results 
 
-def Per_alpha_c(tensor, K):
+def Per_alpha_c(tensor, K, Maskings = None):
     # for Y == I
         # define a set of 5 masking tensors
         # then for each M_i in this set:
@@ -96,7 +97,8 @@ def Per_alpha_c(tensor, K):
     c = ALPHA
     num_it = NUM_IT
     print("doing Y == I with K = {}".format(K))
-    Maskings = masking_tensor_chunks(tensor)
+    if Maskings is None:
+        Maskings = masking_tensor_chunks(tensor)
     with parallel_backend('multiprocessing'):
         Big_Results = Parallel(n_jobs = 37)(delayed(Per_j_c)(j, Maskings, tensor, c, K, symm = False) for j in range(num_it))
     #Big_Results is (num_it x 5) where each entry is an object of size (4):(current_AUC, current_like, ten, M)
@@ -114,7 +116,7 @@ def Per_alpha_c(tensor, K):
         max_results.append(Big_Results[max_idx][j])
     return max_results
 
-def Per_alpha_ones(tensor, K):
+def Per_alpha_ones(tensor, K, Maskings):
     # for Y == I
         # define a set of 5 masking tensors
         # then for each M_i in this set:
@@ -127,7 +129,8 @@ def Per_alpha_ones(tensor, K):
     c = 1
     num_it = NUM_IT
     print("doing Y == I")
-    Maskings = masking_tensor_chunks(tensor)
+    if Maskings is None:
+        Maskings = masking_tensor_chunks(tensor)
     with parallel_backend('multiprocessing'):
         Big_Results = Parallel(n_jobs = 37)(delayed(Per_j_ones)(j, Maskings, tensor, c, K, symm = False) for j in range(num_it))
     #Big_Results is (num_it x 5) where each entry is an object of size (4):(current_AUC, current_like, ten, M)
